@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DLove - Tạo Bó Hoa & Thiệp Lãng Mạn</title>
+    <!-- Tailwind CSS & FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js cho hiệu ứng màn mưa 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Thư viện tạo mã QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;500;600;700&display=swap');
+        .font-dancing { font-family: 'Dancing Script', cursive; }
+        body { font-family: 'Montserrat', sans-serif; background-color: #fff5f7; color: #333; }
+        .pink-gradient { background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%); }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- AUDIO NỀN (Phát xuyên suốt khi xem thiệp) -->
+    <audio id="bg-music" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3">
+    </audio>
+
+    <!-- 1. GIAO DIỆN CHỈNH SỬA (EDITOR) -->
+    <div id="editor-view" class="max-w-md mx-auto p-4">
+        <div class="flex items-center justify-between py-3 border-b border-pink-100 mb-4">
+            <div class="flex items-center space-x-2">
+                <span class="bg-[#ff4d79] text-white font-bold px-2.5 py-1 rounded-full text-sm">DLove</span>
+                <span class="font-bold text-gray-800 text-lg">Tạo bó hoa ảnh</span>
+            </div>
+            <span class="text-xs text-gray-500 bg-pink-50 px-2.5 py-1 rounded-full"><i class="fa-solid fa-cloud text-pink-400 mr-1"></i> Đã lưu trên máy</span>
+        </div>
+
+        <!-- Ảnh & Bó hoa -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-pink-100 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2 text-[#ff4d79] font-semibold">
+                    <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center"><i class="fa-solid fa-heart text-xs"></i></div>
+                    <span>Ảnh & bó hoa</span>
+                </div>
+                <button onclick="addPhoto()" class="text-xs bg-pink-50 text-[#ff4d79] font-medium px-3 py-1.5 rounded-lg border border-pink-200">+ Thêm ảnh</button>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">Ảnh của bạn <span id="bouquet-count">4</span>/6</p>
+            <div id="bouquet-grid" class="grid grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- Màn mưa lời chúc -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-pink-100 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2 text-[#ff4d79] font-semibold">
+                    <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center"><i class="fa-solid fa-wand-magic-sparkles text-xs"></i></div>
+                    <span>Màn mưa</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#ff4d79]"></div>
+                </label>
+            </div>
+            <p class="text-xs text-gray-500 mb-2">Lời chúc</p>
+            <div id="wishes-list" class="space-y-2 mb-3"></div>
+            <button onclick="addWish()" class="text-xs text-[#ff4d79] font-medium mb-3 block">+ Thêm lời chúc</button>
+        </div>
+
+        <!-- Lá thư -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-pink-100 mb-4">
+            <div class="flex items-center space-x-2 text-[#ff4d79] font-semibold mb-3">
+                <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center"><i class="fa-solid fa-envelope text-xs"></i></div>
+                <span>Lá thư</span>
+            </div>
+            <textarea id="letter-content" class="w-full p-3 text-sm border border-pink-200 rounded-xl focus:outline-none focus:border-[#ff4d79] h-24 resize-none">Chúc em 20/10 vui vẻ hạnh phúc mãi bên anh nhé!</textarea>
+        </div>
+
+        <!-- Nhạc nền -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-pink-100 mb-6">
+            <div class="flex items-center space-x-2 text-[#ff4d79] font-semibold mb-3">
+                <div class="w-7 h-7 rounded-full bg-pink-100 flex items-center justify-center"><i class="fa-solid fa-music text-xs"></i></div>
+                <span>Nhạc nền</span>
+            </div>
+            <div id="song-list" class="space-y-2 max-h-40 overflow-y-auto"></div>
+        </div>
+
+        <button onclick="startPreview()" class="w-full pink-gradient text-white font-bold py-3.5 rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm">
+            <i class="fa-solid fa-heart"></i>
+            <span>Xem thử & tạo thiệp</span>
+        </button>
+    </div>
+
+    <!-- 2. GIAO DIỆN TRẢI NGHIỆM HOẠT ẢNH (PREVIEW & ẢNH ĐỘC LẬP) -->
+    <div id="preview-view" class="fixed inset-0 bg-black text-white hidden flex-col items-center justify-center z-50">
+        <button onclick="closePreview()" class="absolute top-5 right-5 text-white/70 hover:text-white text-2xl z-50"><i class="fa-solid fa-xmark"></i></button>
+
+        <!-- Stage 1: Bó hoa -->
+        <div id="stage-bouquet" class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer" onclick="triggerBouquetOpen()">
+            <div class="relative w-72 h-96 flex items-center justify-center">
+                <img id="bouquet-img" src="https://images.unsplash.com/photo-1563245372-f21724e3856d?w=600" class="w-64 h-64 object-cover rounded-3xl shadow-2xl border-4 border-pink-200 transition-all duration-700">
+                <div id="polaroid-spread" class="absolute inset-0 pointer-events-none"></div>
+            </div>
+            <p id="bouquet-hint" class="mt-6 text-sm tracking-wider text-pink-200 animate-pulse font-medium">Chạm vào bó hoa</p>
+        </div>
+
+        <!-- Stage 2: Màn mưa 3D -->
+        <div id="stage-rain" class="absolute inset-0 hidden pointer-events-none">
+            <div id="three-container" class="absolute inset-0"></div>
+            <div class="absolute bottom-12 left-0 right-0 flex justify-center pointer-events-auto">
+                <button onclick="openLetterStage()" class="bg-pink-600/90 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-lg">Mở phong thư <i class="fa-solid fa-arrow-right ml-1"></i></button>
+            </div>
+        </div>
+
+        <!-- Stage 3: Lá thư phong bì -->
+        <div id="stage-letter" class="absolute inset-0 bg-black/90 hidden flex flex-col items-center justify-center p-4 z-40">
+            <div id="envelope-box" class="bg-[#fff0f3] w-full max-w-sm rounded-2xl p-6 text-gray-800 shadow-2xl border-2 border-pink-200">
+                <div class="text-center font-dancing text-2xl text-pink-600 mb-2">Thương mến</div>
+                <p id="letter-display-text" class="text-xs text-gray-700 leading-relaxed mb-4 text-center">Chúc em 20/10 vui vẻ hạnh phúc mãi bên anh nhé!</p>
+                <div class="flex justify-center mb-4">
+                    <img id="letter-display-img" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" class="w-28 h-28 object-cover rounded-xl shadow-md border-2 border-white">
+                </div>
+                <div class="flex justify-center">
+                    <button onclick="triggerPublishCard()" class="pink-gradient text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-md">Tạo thiệp & Lấy mã QR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MODAL MÃ QR ĐỘC LẬP -->
+    <div id="qr-modal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center relative shadow-2xl">
+            <button onclick="closeQrModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <div class="w-12 h-12 bg-pink-100 text-[#ff4d79] rounded-full flex items-center justify-center mx-auto mb-3 text-lg"><i class="fa-solid fa-qrcode"></i></div>
+            <h3 class="font-bold text-gray-800 text-lg mb-1">Thiệp đã sẵn sàng!</h3>
+            <p class="text-xs text-gray-500 mb-4">Quét mã QR dưới đây để mở trang web hoạt ảnh:</p>
+            <div id="qrcode-container" class="bg-pink-50 p-4 rounded-2xl inline-block mb-4 border border-pink-100 flex justify-center"></div>
+            <button onclick="closeQrModal()" class="w-full bg-gray-100 text-gray-700 text-xs font-semibold py-2.5 rounded-xl">Đóng</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT ĐIỀU KHIỂN HOẠT ẢNH -->
+    <script>
+        let photos = [
+            { url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400", title: "Vị trí 1" },
+            { url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400", title: "Vị trí 2" },
+            { url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400", title: "Vị trí 3" },
+            { url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400", title: "Vị trí 4" }
+        ];
+        let wishes = ["Chúc mừng ngày phụ nữ Việt Nam", "Chúc em 20/10 vui vẻ", "i love you", "cảm ơn em đã đến bên anh"];
+        let songs = [{ title: "Có Chắc Yêu Là Đây", active: true }, { title: "A Thousand Years", active: false }];
+
+        function renderEditor() {
+            document.getElementById('bouquet-grid').innerHTML = photos.map((p, i) => `
+                <div class="bg-pink-50 rounded-xl p-2 border border-pink-100">
+                    <img src="${p.url}" class="w-full h-24 object-cover rounded-lg mb-1">
+                    <span class="text-[10px] text-gray-600 font-medium">${p.title}</span>
+                </div>
+            `).join('');
+            document.getElementById('bouquet-count').innerText = photos.length;
+
+            document.getElementById('wishes-list').innerHTML = wishes.map((w, i) => `
+                <div class="bg-pink-50/50 px-3 py-1.5 rounded-xl border border-pink-100 text-xs text-gray-700">0${i+1}. ${w}</div>
+            `).join('');
+
+            document.getElementById('song-list').innerHTML = songs.map((s, i) => `
+                <div class="flex items-center justify-between p-2 rounded-xl text-xs ${s.active ? 'bg-pink-50 border border-pink-200 font-semibold text-[#ff4d79]' : 'text-gray-700'}">
+                    <span><i class="fa-solid fa-music mr-2"></i>${s.title}</span>
+                    ${s.active ? '<i class="fa-solid fa-check"></i>' : ''}
+                </div>
+            `).join('');
+        }
+
+        function addPhoto() {
+            let url = prompt("Nhập đường dẫn ảnh mới (URL):");
+            if(url) { photos.push({url, title: `Vị trí ${photos.length+1}`}); renderEditor(); }
+        }
+        function addWish() {
+            let w = prompt("Nhập lời chúc mới:");
+            if(w) { wishes.push(w); renderEditor(); }
+        }
+
+        function startPreview() {
+            document.getElementById('preview-view').classList.remove('hidden');
+            document.getElementById('preview-view').classList.add('flex');
+            document.getElementById('bg-music').play().catch(e => console.log("Audio block"));
+            document.getElementById('stage-bouquet').classList.remove('hidden');
+            document.getElementById('stage-rain').classList.add('hidden');
+            document.getElementById('stage-letter').classList.add('hidden');
+        }
+
+        function closePreview() {
+            document.getElementById('preview-view').classList.add('hidden');
+            document.getElementById('preview-view').classList.remove('flex');
+            document.getElementById('bg-music').pause();
+        }
+
+        function triggerBouquetOpen() {
+            const spread = document.getElementById('polaroid-spread');
+            spread.innerHTML = '';
+            photos.forEach((p, idx) => {
+                let angle = (idx / photos.length) * Math.PI * 2;
+                let x = Math.cos(angle) * 80, y = Math.sin(angle) * 80;
+                let card = document.createElement('div');
+                card.className = "absolute bg-white p-1 rounded shadow-xl w-16 h-20 transition-all duration-700 transform scale-0";
+                card.style.left = `calc(50% + ${x}px - 32px)`;
+                card.style.top = `calc(50% + ${y}px - 40px)`;
+                card.innerHTML = `<img src="${p.url}" class="w-full h-14 object-cover rounded">`;
+                spread.appendChild(card);
+                setTimeout(() => card.classList.remove('scale-0'), 50 * idx);
+            });
+
+            setTimeout(() => {
+                document.getElementById('stage-bouquet').classList.add('hidden');
+                document.getElementById('stage-rain').classList.remove('hidden');
+                initRain3D();
+            }, 2000);
+        }
+
+        function initRain3D() {
+            const container = document.getElementById('three-container');
+            container.innerHTML = '';
+            let scene = new THREE.Scene();
+            let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            let renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            let geometry = new THREE.BufferGeometry();
+            let positions = [];
+            for(let i=0; i<100; i++) {
+                positions.push((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            let material = new THREE.PointsMaterial({color: 0xff69b4, size: 0.08});
+            let points = new THREE.Points(geometry, material);
+            scene.add(points);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                points.rotation.y += 0.002;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        function openLetterStage() {
+            document.getElementById('stage-rain').classList.add('hidden');
+            document.getElementById('stage-letter').classList.remove('hidden');
+            document.getElementById('letter-display-text.innerText').innerText = document.getElementById('letter-content').value;
+        }
+
+        function triggerPublishCard() {
+            document.getElementById('qr-modal').classList.remove('hidden');
+            const qrc = document.getElementById('qrcode-container');
+            qrc.innerHTML = '';
+            new QRCode(qrc, {
+                text: window.location.href,
+                width: 150, height: 150,
+                colorDark: "#ff4d79", colorLight: "#fff0f3"
+            });
+        }
+        function closeQrModal() { document.getElementById('qr-modal').classList.add('hidden'); }
+
+        window.onload = renderEditor;
+    </script>
+</body>
+</html>
